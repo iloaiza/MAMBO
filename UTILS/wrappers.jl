@@ -5,13 +5,12 @@ function INTERACTION(H)
 	return HR
 end
 
-function ORBITAL_OPTIMIZATION(H, reps = 10; verbose=true)
-	H_rot, U, l1 = parallel_orbital_l1_optimizer(H, reps, verbose = verbose)
-
+function ORBITAL_OPTIMIZATION(H; verbose=true)
+	H_rot, _, _ = orbital_l1_optimizer(H, verbose=verbose, ret_op=true)
 	return H_rot
 end
 
-function RUN(H; DO_CSA = true, DO_DF = true, DO_ΔE = true, DO_AC = true, DO_OO = true, OO_reps = 10, max_frags = 100, verbose=true)
+function RUN(H; DO_CSA = true, DO_DF = true, DO_ΔE = true, DO_AC = true, DO_OO = true, DO_SQRT = false, max_frags = 100, verbose=true)
 	if DO_ΔE
 		println("Obtaining 1-norm lower bound")
 		@time λ_min = SQRT_L1(H)
@@ -37,17 +36,32 @@ function RUN(H; DO_CSA = true, DO_DF = true, DO_ΔE = true, DO_AC = true, DO_OO 
 	if DO_CSA
 		println("\nCSA:")
 		@time λ2_CSA = sum(L1.(CSA_FRAGS))
-		@time λ2_CSA_SQRT = sum(SQRT_L1.(CSA_FRAGS))
 		@show (λ2_CSA, λ1 + λ2_CSA)
-		@show (λ2_CSA_SQRT, λ1 + λ2_CSA_SQRT)
+		if DO_SQRT
+			println("Square-root routine...")
+			t00 = time()
+			l1 = SharedArray(zeros(length(CSA_FRAGS)))
+			@sync @distributed for i in 1:length(CSA_FRAGS)
+				l1[i] = SQRT_L1(CSA_FRAGS[i])
+			end
+			λ2_CSA_SQRT = sum(l1)
+			println("Finished after $(time() - t00) seconds...")
+			#@time λ2_CSA_SQRT = sum(SQRT_L1.(CSA_FRAGS))
+			@show (λ2_CSA_SQRT, λ1 + λ2_CSA_SQRT)
+		end
 	end
 
 	if DO_DF
 		println("\nDF:")
 		@time λ2_DF = sum(L1.(DF_FRAGS))
-		@time λ2_DF_SQRT = sum(SQRT_L1.(DF_FRAGS))
 		@show (λ2_DF, λ1 + λ2_DF)
-		@show (λ2_DF_SQRT, λ1 + λ2_DF_SQRT)
+		#=
+		if DO_SQRT
+			println("Square-root routine...")
+			@time λ2_DF_SQRT = sum(SQRT_L1.(DF_FRAGS))
+			@show (λ2_DF_SQRT, λ1 + λ2_DF_SQRT)
+		end
+		# =#
 	end
 
 	println("\nPauli:")
@@ -62,7 +76,7 @@ function RUN(H; DO_CSA = true, DO_DF = true, DO_ΔE = true, DO_AC = true, DO_OO 
 
 	if DO_OO
 		println("\nOrbital-rotation routine:")
-		@time H_rot = ORBITAL_OPTIMIZATION(H, OO_reps, verbose=verbose)
+		@time H_rot = ORBITAL_OPTIMIZATION(H, verbose=verbose)
 		λOO_Pauli = PAULI_L1(H_rot)
 		@show λOO_Pauli
 		if DO_AC
