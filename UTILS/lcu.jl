@@ -1,46 +1,50 @@
 #module for creating LCU from fragments and calculating the resulting 1-norm
-function L1(F :: F_FRAG; debug = false)
+function L1(F :: F_FRAG; debug = false, count = false)
 	#calculates 1-norm of fragment
 	#debug: run debugging routines
 	if F.TECH == CSA()
-		return CSA_L1(F, debug = debug)
+		return CSA_L1(F, debug = debug, count = count)
 	elseif F.TECH == DF()
-		return DF_L1(F, debug = debug)
+		return DF_L1(F, debug = debug, count = count)
 	elseif F.TECH == THC()
-		return THC_L1(F, debug = debug)
+		return THC_L1(F, debug = debug, count = count)
 	elseif F.TECH == OBF()
-		return OBF_L1(F, debug = debug)
+		return OBF_L1(F, debug = debug, count = count)
 	else
 		error("Trying to calculate LCU 1-norm decomposition for fermionic fragment with FRAGMENTATION_TECH=$(F.TECH), not implemented!")
 	end
 end
 
-function SQRT_L1(F :: F_OP)
+function SQRT_L1(F :: F_OP; count = false)
 	#return minimal 1-norm for fermionic operator, does not scale well!
 	of_OP = qubit_transform(to_OF(F))
 	range = OF_qubit_op_range(of_OP)
-	return (range[2] - range[1])/2
-end
+	spec_range = (range[2] - range[1])/2
 
-function SQRT_L1(F :: F_FRAG; debug = false)
-	#lower bound of the 1-norm of a fragment
-	#debug: run debugging routines
-	if F.TECH == CSA()
-		return CSA_SQRT_L1(F, debug = debug)
-	elseif F.TECH == DF()
-		return DF_SQRT_L1(F, debug = debug)
-	elseif F.TECH == THC()
-		#THC already gives minimum 1-norm for a fragment since it only implements a rotated Z1
-		return THC_L1(F, debug = debug)
-	elseif F.TECH == OBF()
-		#one-body fragments already give minimum 1-norm
-		return OBF_L1(F, debug = debug)
+	if count
+		return spec_range, 2
 	else
-		error("Trying to calculate LCU square-root 1-norm decomposition for fermionic fragment with FRAGMENTATION_TECH=$(F.TECH), not implemented!")
+		return spec_range
 	end
 end
 
-function CSA_L1(F :: F_FRAG; debug = false)
+function SQRT_L1(F :: F_FRAG; count = false)
+	#lower bound of the 1-norm of a fragment, removes one-body correction
+	Q_OP = qubit_transform(to_OF(F))
+	obt_corr = ob_correction(F)
+	Q_OP -= qubit_transform(to_OF(F_OP(obt_corr)))
+	
+	range = OF_qubit_op_range(Q_OP)
+	spec_range = (range[2] - range[1])/2
+
+	if count
+		return spec_range, 2
+	else
+		return spec_range
+	end
+end
+
+function CSA_L1(F :: F_FRAG; debug = false, count = false)
 	if F.spin_orb == false
 		idx = 0
 		l1 = 0.0
@@ -61,98 +65,58 @@ function CSA_L1(F :: F_FRAG; debug = false)
 		error("1-norm CSA calculation not implemented for spin-orb=true")
 	end
 
-	if debug == false
-		return l1
-	else
+	if debug
 		tbt = tbt_orb_to_so(cartan_2b_to_tbt(F.C))
-		@show l1
 		for i in 1:2F.N
 			tbt[i,i,i,i] = 0
 		end
+		@show l1
 		@show sum(abs.(tbt))/4
-		
+	end
+
+	if count
+		return l1, 2*(F.N^2)
+	else
 		return l1
 	end
 end
 
-function CSA_SQRT_L1(F :: F_FRAG; debug = false)
-	if F.spin_orb
-		error("Trying to calculate square-root 1-norm for spin-orb=true, not implemented!")
-	end
-
-	E_VALS = zeros(2^F.N)
-	num_λ = length(F.C.λ)
-
-	for i in 0:2^(F.N)-1
-		n_arr = digits(i, base=2, pad=F.N)
-		idx = 0
-		for i1 in 1:F.N
-			for i2 in 1:i1
-				idx += 1
-				if n_arr[i1] == 1 && n_arr[i2] == 1
-					if i1 == i2
-						E_VALS[i+1] += F.C.λ[idx]
-					else
-						E_VALS[i+1] += 2*F.C.λ[idx]
-					end
-				end
-			end
-		end
-	end
-
-	E_VALS *= 4
-
-	if debug == false
-		return (maximum(E_VALS) - minimum(E_VALS))/2
-	else
-		Q_OP = qubit_transform(to_OF(F))
-		obt_corr = ob_correction(cartan_2b_to_tbt(F.C), F.spin_orb)
-		obt_corr = obt_rotation(one_body_unitary(F.U[1]), corr_dbg)
-		Q_OP -= qubit_transform(to_OF(F_OP(obt_corr)))
-
-		return (maximum(E_VALS) - minimum(E_VALS))/2, Q_OP
-	end
-end
-
-function DF_L1(F :: F_FRAG; debug = false)
+function DF_L1(F :: F_FRAG; debug = false, count = false)
 	if F.spin_orb == false
-		return 0.5 * abs(F.coeff) * ((sum(abs.(F.C.λ)))^2)
-	else
-		error("1-norm DF calculation not implemented for spin-orb=true")
-	end
-end
-
-function DF_SQRT_L1(F :: F_FRAG; debug = false)
-	if F.spin_orb == false
-		if debug == false
-			return 0.5 * abs(F.coeff) * ((sum(abs.(F.C.λ)))^2)
+		l1 = 0.5 * abs(F.coeff) * ((sum(abs.(F.C.λ)))^2)
+		if count
+			return l1, 1
 		else
-			ϵ_pos = 0.5 * sum(F.C.λ + abs.(F.C.λ))
-			ϵ_neg = 0.5 * abs(sum(F.C.λ - abs.(F.C.λ)))
-			L1 = 0.5 * abs(F.coeff) * ((maximum([ϵ_pos, ϵ_neg]))^2)
-			Q_OP = qubit_transform(to_OF(F))
-			obt_corr = ob_correction(F)
-			Q_OP -= qubit_transform(to_OF(F_OP(obt_corr)))
-			return L1, Q_OP
+			return l1
 		end
 	else
 		error("1-norm DF calculation not implemented for spin-orb=true")
 	end
 end
 
-function THC_L1(F :: F_FRAG; debug = false)
+function THC_L1(F :: F_FRAG; debug = false, count = false)
 	if F.spin_orb == false
-		return abs(F.coeff)
+		if count
+			return abs.(F.coeff), 4
+		else
+			return abs(F.coeff)
+		end
 	else
 		error("1-norm THC calculation not implemented for spin-orb=true")
 	end
 end
 
-function OBF_L1(F :: F_FRAG; debug = false)
+function OBF_L1(F :: F_FRAG; debug = false, count = false)
 	if F.spin_orb == false
-		return sum(abs.(F.C.λ))
+		l1 = sum(abs.(F.C.λ))
 	else
-		return 0.5 * sum(abs.(F.C.λ))
+		l1 = 0.5 * sum(abs.(F.C.λ))
+	end
+
+	if count
+		return l1, F.N*(F.spin_orb+1)
+	else
+		return l1
 	end
 end
 
