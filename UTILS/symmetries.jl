@@ -82,7 +82,7 @@ function symmetry_treatment(H :: F_OP; verbose=true)
 	#x2, H2 = naive_tb_symmetry_shift(H)
 	# =
 	τ_mat = τ_mat_builder([Ne2.mbts[3]])
-	x2 = L1_linprog_optimizer_frag(H.mbts[3], τ_mat)[1]
+	x2 = L1_linprog_optimizer_tbt(H.mbts[3], τ_mat)[1]
 	H2 = H - x2*Ne2
 	# =#
 

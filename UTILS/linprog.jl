@@ -39,7 +39,7 @@ function τ_mat_builder(SYM_ARR)
     return τ_mat
 end
 
-function L1_linprog_optimizer_frag(cartan_tbt :: Array{Float64,4}, τ_mat, verbose=false, model="highs")
+function L1_linprog_optimizer_tbt(cartan_tbt :: Array{Float64,4}, τ_mat, verbose=false, model="highs")
     if model == "highs"
         L1_OPT = Model(HiGHS.Optimizer)
     elseif model == "ipopt"
@@ -64,102 +64,6 @@ function L1_linprog_optimizer_frag(cartan_tbt :: Array{Float64,4}, τ_mat, verbo
 
     @constraint(L1_OPT, low, τ_mat*s - t - λ_vec .<= 0)
     @constraint(L1_OPT, high, τ_mat*s + t - λ_vec .>= 0)
-
-    optimize!(L1_OPT)
-
-    return value.(s)
-end
-
-function L1_linprog_optimizer_frag(λ_vec :: Array{Float64,1}, τ_mat, verbose=false, model="highs")
-    if model == "highs"
-        L1_OPT = Model(HiGHS.Optimizer)
-    elseif model == "ipopt"
-        L1_OPT = Model(Ipopt.Optimizer)
-    else
-        error("Not defined for model = $model")
-    end
-    
-    if verbose == false
-        set_silent(L1_OPT)
-    end
-
-    ν_len,num_syms = size(τ_mat)
-
-    @variables(L1_OPT, begin
-        s[1:num_syms]
-        t[1:ν_len]
-    end)
-
-    @objective(L1_OPT, Min, sum(t))
-
-    @constraint(L1_OPT, low, τ_mat*s - t - λ_vec .<= 0)
-    @constraint(L1_OPT, high, τ_mat*s + t - λ_vec .>= 0)
-
-    optimize!(L1_OPT)
-
-    return value.(s)
-end
-
-function L1_linprog_optimizer_frag(C :: cartan_2b, τ_mat, verbose=false, model="highs")
-    if model == "highs"
-        L1_OPT = Model(HiGHS.Optimizer)
-    elseif model == "ipopt"
-        L1_OPT = Model(Ipopt.Optimizer)
-    else
-        error("Not defined for model = $model")
-    end
-    
-    if verbose == false
-        set_silent(L1_OPT)
-    end
-
-    ν_len,num_syms = size(τ_mat)
-
-    @variables(L1_OPT, begin
-        s[1:num_syms]
-        t[1:ν_len]
-    end)
-
-    @objective(L1_OPT, Min, sum(t))
-
-    @constraint(L1_OPT, low, τ_mat*s - t - C.λ .<= 0)
-    @constraint(L1_OPT, high, τ_mat*s + t - C.λ .>= 0)
-
-    optimize!(L1_OPT)
-
-    return value.(s)
-end
-
-function L1_linprog_optimizer_full(tbt_full, SYM_ARR, verbose=false)
-    #input: tbt for both 1- and 2-body terms in spin-orbitals
-    #minimize 1-norm = ∑_(ijkl) |tbt[i,j,k,l]|
-    n = size(tbt_full)[1]
-    N4 = n^4
-
-    tbt_full = reshape(tbt_full, N4)
-    
-    num_syms = length(SYM_ARR)
-
-    syms_mat = zeros(N4, num_syms)
-    for i in 1:num_syms
-        syms_mat[:,i] = reshape(SYM_ARR[i],N4)
-    end
-
-    L1_OPT = Model(Ipopt.Optimizer)
-    
-    if verbose == false
-        set_silent(L1_OPT)
-    end
-
-    @variables(L1_OPT, begin
-        s[1:num_syms]
-        t[1:N4]
-    end)
-
-    @objective(L1_OPT, Min, sum(t))
-
-    @constraint(L1_OPT, low, syms_mat*s - t - tbt_full .<= 0)
-    @constraint(L1_OPT, high, syms_mat*s + t - tbt_full .>= 0)
 
     optimize!(L1_OPT)
 
