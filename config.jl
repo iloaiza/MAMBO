@@ -17,6 +17,7 @@ const ϵ_Givens = 1e-12 #tolerance for Givens decomposition using maximal torus 
 const SVD_tiny = 1e-8 #tolerance for symmetry-enforcement of SVD fragments
 const SVD_tol = 1e-8 #cut-off for SVD coefficients
 const PAULI_TOL = 1e-8 #cut-off Pauli terms when building Q_OP qubit operators with magnitude smaller than this tolerance
+const LCU_tol = 1e-6 #cut-off for counting unitaries with magnitude smaller than this tolerance
 
 #Additional definitions
 const CONFIG_LOADED = true #flag that tracks config already being loaded, useful for redefining constants and being able to load build.jl

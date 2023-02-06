@@ -10,7 +10,15 @@ function ORBITAL_OPTIMIZATION(H; verbose=true)
 	return H_rot
 end
 
-function RUN(H; DO_CSA = true, DO_DF = true, DO_ΔE = true, DO_AC = true, DO_OO = true, DO_SQRT = false, max_frags = 100, verbose=true)
+function RUN(H; DO_CSA = true, DO_DF = true, DO_ΔE = true, DO_AC = true, DO_OO = true, DO_SQRT = false, max_frags = 100, verbose=true, COUNT=false)
+	# Obtain 1-norms for different LCU methods. COUNT=true also counts number of unitaries in decomposition
+	# CSA: Cartan sub-algebra decomposition
+	# DF: Double Factorization
+	# ΔE: Exact lower bound from diagonalization of H
+	# AC: Anticommuting grouping
+	# OO: Orbital rotation technique
+	# SQRT: obtain square-root lower bound for non-optimal factorization methods (i.e. CSA)
+
 	if DO_ΔE
 		println("Obtaining 1-norm lower bound")
 		@time λ_min = SQRT_L1(H)
@@ -21,67 +29,63 @@ function RUN(H; DO_CSA = true, DO_DF = true, DO_ΔE = true, DO_AC = true, DO_OO 
 		println("Doing CSA")
 		max_frags = 100
 		@time CSA_FRAGS = CSA_greedy_decomposition(H, max_frags, verbose=verbose)
+		println("Finished CSA decomposition for 2-body term using $(length(CSA_FRAGS)) fragments")
 	end
 
 	if DO_DF
 		println("\n\nDoing DF")
 		@time DF_FRAGS = DF_decomposition(H, verbose=verbose)
+		println("Finished DF decomposition for 2-body term using $(length(DF_FRAGS)) fragments")
 	end
 
 	println("\n\nCalculating 1-norms...")
 	println("1-body:")
-	@time λ1 = one_body_L1(H)
+	@time λ1 = one_body_L1(H, count=COUNT)
 	@show λ1
 
 	if DO_CSA
 		println("\nCSA:")
-		@time λ2_CSA = sum(L1.(CSA_FRAGS))
-		@show (λ2_CSA, λ1 + λ2_CSA)
+		@time λ2_CSA = sum(L1.(CSA_FRAGS, count=COUNT))
+		@show λ1 + λ2_CSA
 		if DO_SQRT
 			println("Square-root routine...")
-			t00 = time()
-			l1 = SharedArray(zeros(length(CSA_FRAGS)))
-			@sync @distributed for i in 1:length(CSA_FRAGS)
-				l1[i] = SQRT_L1(CSA_FRAGS[i])
-			end
-			λ2_CSA_SQRT = sum(l1)
-			println("Finished after $(time() - t00) seconds...")
-			#@time λ2_CSA_SQRT = sum(SQRT_L1.(CSA_FRAGS))
-			@show (λ2_CSA_SQRT, λ1 + λ2_CSA_SQRT)
+			@time λ2_CSA_SQRT = sum(SQRT_L1.(CSA_FRAGS, count=COUNT))
+			@show λ1 + λ2_CSA_SQRT
 		end
 	end
 
 	if DO_DF
 		println("\nDF:")
-		@time λ2_DF = sum(L1.(DF_FRAGS))
-		@show (λ2_DF, λ1 + λ2_DF)
-		#=
-		if DO_SQRT
-			println("Square-root routine...")
-			@time λ2_DF_SQRT = sum(SQRT_L1.(DF_FRAGS))
-			@show (λ2_DF_SQRT, λ1 + λ2_DF_SQRT)
-		end
-		# =#
+		@time λ2_DF = sum(L1.(DF_FRAGS, count=COUNT))
+		@show λ1 + λ2_DF
 	end
 
 	println("\nPauli:")
-	@time λPauli = PAULI_L1(H)
+	@time λPauli = PAULI_L1(H, count=COUNT)
 	@show λPauli
 	
 	if DO_AC
 		println("\nAnti-commuting:")
-		@time λAC, _ = AC_group(H, ret_ops=false)
-		@show λAC
+		@time λAC, N_AC = AC_group(H, ret_ops=false)
+		if COUNT
+			@show λAC, N_AC
+		else
+			@show λAC
+		end
 	end
 
 	if DO_OO
 		println("\nOrbital-rotation routine:")
 		@time H_rot = ORBITAL_OPTIMIZATION(H, verbose=verbose)
-		λOO_Pauli = PAULI_L1(H_rot)
+		λOO_Pauli = PAULI_L1(H_rot, count=COUNT)
 		@show λOO_Pauli
 		if DO_AC
-			λOO_AC, _ = AC_group(H_rot, ret_ops=false)
-			@show λOO_AC
+			λOO_AC, N_OO_AC = AC_group(H_rot, ret_ops=false)
+			if COUNT
+				@show λOO_AC, N_OO_AC
+			else
+				@show λOO_AC
+			end
 		end
 	end
 end

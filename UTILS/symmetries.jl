@@ -76,7 +76,7 @@ end
 
 function symmetry_treatment(H :: F_OP; verbose=true)
 	if verbose
-		println("Starting total L2 norm for Hamiltonian is $(L2_partial_cost(H))")
+		println("Starting total L1 norm for Hamiltonian is $(PAULI_L1(H))")
 	end
 	Ne, Ne2 = symmetry_builder(H)
 	#x2, H2 = naive_tb_symmetry_shift(H)
@@ -98,7 +98,7 @@ function symmetry_treatment(H :: F_OP; verbose=true)
 	# =#
 
 	if verbose
-		println("Final total L2 norm for symmetry-shifted Hamiltonian is $(L2_partial_cost(H_sym))")
+		println("Final total L1 norm for symmetry-shifted Hamiltonian is $(PAULI_L1(H_sym))")
 	end
 
 	return H_sym - obt_corr, [x2, x1]

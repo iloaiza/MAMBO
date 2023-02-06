@@ -98,7 +98,7 @@ struct cartan_1b <: CARTANS
 end
 
 function cartan_1b(spin_orb, λ)
-	return cartan_1b(spin_orb, λ, length(N))
+	return cartan_1b(spin_orb, λ, length(λ))
 end
 
 struct cartan_2b <: CARTANS

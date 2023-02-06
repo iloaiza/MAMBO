@@ -17,7 +17,7 @@ function orbital_l1_optimizer(F :: F_OP; verbose=false, ret_op = true, do_Givens
 	end
 	
 	ini_cost = cost(x0)
-	u_params = 2π*rand(u_num)
+	#u_params = 2π*rand(u_num) #randomizes initial angles, not necessary for convergence
 
 	if verbose
 		@show ini_cost
@@ -36,6 +36,7 @@ function orbital_l1_optimizer(F :: F_OP; verbose=false, ret_op = true, do_Givens
 	end
 end
 
+#= Parallel routine, deprecated since convergence can be achieved in a single iteration
 function parallel_orbital_l1_optimizer(F :: F_OP, reps = 10; verbose = false, do_Givens=OO_GIVENS)
 	u_num = real_orbital_rotation_num_params(F.N)
 
@@ -63,3 +64,4 @@ function parallel_orbital_l1_optimizer(F :: F_OP, reps = 10; verbose = false, do
 
 	return F_OP_rotation(U, F), U, MINS[ind_perm[1]]
 end
+# =#

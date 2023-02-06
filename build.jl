@@ -1,6 +1,5 @@
 #INCLUDES PACKAGES IN NECESSARY ORDER
 using LinearAlgebra, Einsum, Optim, SharedArrays, JuMP, Arpack
-using Distributed
 
 if !(@isdefined CONFIG_LOADED) #only include config file one time so constants can be later redefined
 	include("config.jl")
@@ -24,6 +23,6 @@ include("UTILS/lcu.jl")
 include("UTILS/py_utils.jl")
 include("UTILS/majorana.jl")
 include("UTILS/qubit.jl")
-include("UTILS/orbitals.jl") #REQUIRES PARALLEL
+include("UTILS/orbitals.jl")
 
 include("UTILS/wrappers.jl")

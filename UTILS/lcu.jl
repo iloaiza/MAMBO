@@ -22,7 +22,7 @@ function SQRT_L1(F :: F_OP; count = false)
 	spec_range = (range[2] - range[1])/2
 
 	if count
-		return spec_range, 2
+		return [spec_range, 2]
 	else
 		return spec_range
 	end
@@ -30,39 +30,94 @@ end
 
 function SQRT_L1(F :: F_FRAG; count = false)
 	#lower bound of the 1-norm of a fragment, removes one-body correction
-	Q_OP = qubit_transform(to_OF(F))
-	obt_corr = ob_correction(F)
-	Q_OP -= qubit_transform(to_OF(F_OP(obt_corr)))
-	
-	range = OF_qubit_op_range(Q_OP)
-	spec_range = (range[2] - range[1])/2
+	if typeof(F.TECH) == CSA
+		return SQRT_CSA_L1(F, count=count)
+	elseif typeof(F.TECH) == DF
+		return DF_L1(F, count=false), 2
+	else
+		Q_OP = qubit_transform(to_OF(F))
+		obt_corr = ob_correction(F)
+		Q_OP -= qubit_transform(to_OF(F_OP(obt_corr)))
+		
+		range = OF_qubit_op_range(Q_OP)
+		spec_range = (range[2] - range[1])/2
 
+		if count
+			return [spec_range, 2]
+		else
+			return spec_range
+		end
+	end
+end
+
+function SQRT_CSA_L1(F :: F_FRAG; count = false)
+	#lower bound for CSA fragment
+	if F.spin_orb
+		error("Not implemented for spin-orb = true!")
+	end
+
+	λ_mat = zeros(F.N, F.N)
+	idx = 0
+	for i in 1:F.N
+		for j in 1:i
+			idx += 1
+			λ_mat[i,j] = λ_mat[j,i] = F.C.λ[idx]
+		end
+	end
+
+	λ_corr = zeros(2*F.N, 2*F.N)
+	for i in 1:F.N
+		for j in 1:F.N
+			for a in -1:0
+				for b in -1:0
+					λ_corr[2i+a,2j+b] = λ_corr[2j+b, 2i+a] = λ_mat[i,j]
+				end
+			end
+		end
+	end
+	for i in 1:F.N
+		for a in -1:0
+			λ_corr[2i+a,2i+a] -= 2*sum(λ_mat[i,:])
+		end
+	end
+
+	E_VALS = zeros(2^(2*F.N))
+	for i in 0:2^(2*F.N)-1
+		n_arr = digits(i, base=2, pad=2*F.N)
+		for j1 in 1:2F.N
+			for j2 in 1:2F.N
+				E_VALS[i+1] += λ_corr[j1,j2] * n_arr[j1] * n_arr[j2]
+			end
+		end
+	end
+
+	spec_range = (maximum(E_VALS) - minimum(E_VALS))/2
 	if count
-		return spec_range, 2
+		return [spec_range, 2]
 	else
 		return spec_range
 	end
 end
 
 function CSA_L1(F :: F_FRAG; debug = false, count = false)
-	if F.spin_orb == false
-		idx = 0
-		l1 = 0.0
-		for i in 1:F.C.N
-			for j in 1:i #sum i ≥ j
-				idx += 1
-				#λ_ij = λ_ji = F.C.λ[idx]
-				if i != j
-					#|λ_ij| + |λ_ji|
-					l1 += 2*abs(F.C.λ[idx])
-				else
-					#|λ_ii|/2
-					l1 += 0.5*abs(F.C.λ[idx])
-				end
+	if F.spin_orb
+		error("1-norm CSA calculation not implemented for spin-orb=true")
+	end
+
+	idx = 0
+	l1 = 0.0
+	for i in 1:F.C.N
+		for j in 1:i #sum i ≥ j
+			idx += 1
+			#λ_ij = λ_ji = F.C.λ[idx]
+			if i != j
+				#|λ_ij| + |λ_ji|
+				l1 += 2*abs(F.C.λ[idx])
+			else
+				#|λ_ii|/2
+				l1 += 0.5*abs(F.C.λ[idx])
 			end
 		end
-	else
-		error("1-norm CSA calculation not implemented for spin-orb=true")
 	end
 
 	if debug
@@ -75,7 +130,23 @@ function CSA_L1(F :: F_FRAG; debug = false, count = false)
 	end
 
 	if count
-		return l1, 2*(F.N^2)
+		N_Us = 0
+		idx = 0
+		for i in 1:F.C.N
+			for j in 1:i
+				idx += 1
+				if i != j
+					if abs(F.C.λ[idx]) > LCU_tol
+						N_Us += 4
+					end
+				else
+					if abs(F.C.λ[idx]) > LCU_tol
+						N_Us += 2
+					end
+				end
+			end
+		end
+		return [l1, N_Us]
 	else
 		return l1
 	end
@@ -85,7 +156,7 @@ function DF_L1(F :: F_FRAG; debug = false, count = false)
 	if F.spin_orb == false
 		l1 = 0.5 * abs(F.coeff) * ((sum(abs.(F.C.λ)))^2)
 		if count
-			return l1, 1
+			return [l1, 1]
 		else
 			return l1
 		end
@@ -97,7 +168,11 @@ end
 function THC_L1(F :: F_FRAG; debug = false, count = false)
 	if F.spin_orb == false
 		if count
-			return abs.(F.coeff), 4
+			if abs(F.coeff) > LCU_tol
+				return [abs(F.coeff), 4]
+			else
+				return [abs(F.coeff), 0]
+			end
 		else
 			return abs(F.coeff)
 		end
@@ -114,33 +189,59 @@ function OBF_L1(F :: F_FRAG; debug = false, count = false)
 	end
 
 	if count
-		return l1, F.N*(F.spin_orb+1)
+		N_Us = 0
+		for λ_coeff in F.C.λ
+			if abs(λ_coeff) > LCU_tol
+				N_Us += 1
+			end
+		end
+		if !F.spin_orb
+			N_Us *= 2
+		end
+		return [l1, N_Us]
 	else
 		return l1
 	end
 end
 
-function one_body_L1(H :: F_OP)
+function one_body_L1(H :: F_OP; count=false)
 	#get one-body 1-norm after correction from 2-body term
 	if H.spin_orb
 		error("spin_orb = true, not implemented!")
 	end
 	obf = to_OBF(H.mbts[2] + ob_correction(H))
 
-	return OBF_L1(obf)
+	return OBF_L1(obf, count=count)
 end
 
-function PAULI_L1(Q :: Q_OP)
+function PAULI_L1(Q :: Q_OP; count=false)
 	l1 = 0.0
+
+	if count
+		N_Us = 0
+	end
 
 	for pw in Q.paulis
 		l1 += abs(pw.coeff)
+		if count
+			if abs(pw.coeff) > LCU_tol
+				N_Us += 1
+			end
+		end
 	end
 
-	return l1
+	if count
+		return [l1, N_Us]
+	else
+		return l1
+	end
 end
 
-function PAULI_L1(F :: F_OP)
+function PAULI_L1(F :: F_OP; count=false)
+	if count
+		return PAULI_L1(Q_OP(F), count=true)
+	end
+
 	l1 = 0.0
 	if F.Nbods > 2
 		error("Trying to calculate Pauli cost for fermionic operator with more than 2-body terms, not implemented!")
