@@ -21,5 +21,5 @@ and making sure that julia is running with the correct JULIA_DEPOT_PATH bash var
 ## References
 This code was developped and used for all results in the publication:
 
-I. Loaiza, A. Marefat Khah, N. Wiebe, and A. F. Izmaylov, Reducing molecular electronic Hamiltonian simulation cost for Linear Combination of Unitaries approaches. arXiv.2208.08272 (2022).
+[1] - I. Loaiza, A. Marefat Khah, N. Wiebe, and A. F. Izmaylov, Reducing molecular electronic Hamiltonian simulation cost for Linear Combination of Unitaries approaches. arXiv.2208.08272 (2022).
 
