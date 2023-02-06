@@ -1,9 +1,9 @@
 # MAMBO: Efficient many-body routines in Julia
 
 ## Using MAMBO
-MAMBO includes efficient implementations for fermionic and qubit operators. To obtain results shown in Ref.(1), run on a terminal (e.g. for LiH using 10 parallel processes):
+MAMBO includes efficient implementations for fermionic and qubit operators. To obtain results shown in Ref.(1), run on a terminal (e.g. for LiH):
 
-julia -p 10 L1.jl lih
+julia L1.jl lih
 
 All options and tolerances can be seen in config.jl. Make sure that the python environment which was used to build PyCall on Julia is active when running this command (see install.sh script for more info).
 
