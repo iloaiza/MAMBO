@@ -223,7 +223,7 @@ function to_SO(F :: F_OP)
 		mbts = tuple(M_arr...)
 	end
 
-	return F_OP(F.Nbods,mbts,F.filled,true,2*F.N)
+	return F_OP(copy(F.Nbods),mbts,copy(F.filled),true,2*F.N)
 end
 
 import Base.+
@@ -301,22 +301,25 @@ function F_OP_collect_obt(F :: F_OP)
 		tbt = obt_to_tbt(F_mid.mbts[2])
 		mbts = (F_mid.mbts[1], [0.0], tbt)
 		filled = [F_mid.filled[1], false, true]
+		Nret = F_mid.N
 	else
-		if F_OP.spin_orb == false
+		if F.spin_orb == false
 			F_mid = to_SO(F)
 			tbt = F_mid.mbts[3] + obt_to_tbt(F_mid.mbts[2])
 			mbts = tuple(F_mid.mbts[1], [0.0], tbt, F_mid.mbts[4:end])
 			filled = F_mid.filled
-			filled[2] = 0
+			filled[2] = false
+			Nret = F_mid.N
 		else
 			tbt = F.mbts[3] + obt_to_tbt(F.mbts[2])
 			mbts = tuple(F.mbts[1], [0.0], tbt, F.mbts[4:end]...)
 			filled = F.filled
-			filled[2] = 0
+			filled[2] = false
+			Nret = F.N
 		end
 	end
 
-	return F_OP(F.Nbods, mbts, filled, true, F.N)
+	return F_OP(F.Nbods, mbts, filled, true, Nret)
 end
 
 import Base.copy
@@ -379,8 +382,12 @@ function ob_correction(tbt :: Array{Float64, 4}, spin_orb=false)
 	end
 end
 
-function ob_correction(F :: F_FRAG)
-	return ob_correction(to_OP(F))
+function ob_correction(F :: F_FRAG; return_op = false)
+	if return_op == false
+		return ob_correction(to_OP(F))
+	else
+		return F_OP(([0],ob_correction(to_OP(F))))
+	end
 end
 
 function initialize_FRAG(N :: Int64, TECH :: DF; REAL=true)

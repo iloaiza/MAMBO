@@ -33,7 +33,9 @@ function SQRT_L1(F :: F_FRAG; count = false)
 	if typeof(F.TECH) == CSA
 		return SQRT_CSA_L1(F, count=count)
 	elseif typeof(F.TECH) == DF
-		return DF_L1(F, count=false), 2
+		return DF_L1(F, count=count)
+	elseif typeof(F.TECH) == OBF
+		return OBF_L1(F, count=count)
 	else
 		Q_OP = qubit_transform(to_OF(F))
 		obt_corr = ob_correction(F)

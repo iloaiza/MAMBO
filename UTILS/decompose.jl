@@ -1,4 +1,4 @@
-function CSA_greedy_decomposition(H :: F_OP, α_max; decomp_tol = ϵ, verbose=true)
+function CSA_greedy_decomposition(H :: F_OP, α_max; decomp_tol = ϵ, verbose=true, SAVELOAD=SAVING, SAVENAME=DATADIR*"CSA.h5")
 	F_rem = copy(H) #fermionic operator, tracks remainder after removing found greedy fragments
 	F_rem.filled[1:2] .= false #only optimize 2-body tensor
 
@@ -10,14 +10,41 @@ function CSA_greedy_decomposition(H :: F_OP, α_max; decomp_tol = ϵ, verbose=tr
 	unitary_L = real_orbital_rotation_num_params(H.N)
 
 	tot_L = cartan_L + unitary_L
+	if SAVELOAD
+		X = zeros(tot_L, α_max)
+	end
 
 	Farr = F_FRAG[]
+	α_curr = 0
+	α_ini = 1
+
+	if SAVELOAD
+		fid = h5open(SAVENAME, "cw")
+		if "CSA" in keys(fid)
+			CSA_group = fid["CSA"]
+			x = read(CSA_group, "x")
+			x_len, α_curr = size(x)
+			println("Found saved x under filename $SAVENAME for CSA decomposition, loaded $α_curr fragments...")
+			if x_len != tot_L
+				error("Trying to load from $SAVENAME, saved x has wrong dimensions for CSA parameters of H!")
+			end
+			α_ini = α_curr + 1
+			for i in 1:α_curr
+				frag = CSA_x_to_F_FRAG(x[:,i], H.N, H.spin_orb, cartan_L)
+				push!(Farr, frag)
+				F_rem = F_rem - to_OP(frag)
+			end
+			X[:,1:α_curr] = x
+		else
+			create_group(fid, "CSA")
+			CSA_group = fid["CSA"]
+		end
+	end
 
 	curr_cost = L2_partial_cost(F_rem)
 	if verbose
 		println("Initial L2 cost is $curr_cost")
 	end
-	α_curr = 0
 
 	while curr_cost > decomp_tol && α_curr < α_max
 		α_curr += 1
@@ -32,6 +59,13 @@ function CSA_greedy_decomposition(H :: F_OP, α_max; decomp_tol = ϵ, verbose=tr
 		push!(Farr, frag)
 		F_rem = F_rem - to_OP(frag)
 		curr_cost = sol.minimum
+		if SAVELOAD
+			X[:,α_curr] = sol.minimizer
+			if haskey(CSA_group, "x")
+				delete_object(CSA_group, "x") 
+			end
+			CSA_group["x"] = X[:, 1:α_curr]
+		end
 	end
 
 	if verbose
@@ -39,7 +73,11 @@ function CSA_greedy_decomposition(H :: F_OP, α_max; decomp_tol = ϵ, verbose=tr
 	end
 
 	if curr_cost > decomp_tol
-		println("Warning, CSA decomposition did not converge, remining L2-norm is $curr_cost")
+		@warn "CSA decomposition did not converge, remaining L2-norm is $curr_cost"
+	end
+
+	if SAVELOAD
+		close(fid)
 	end
 
 	return Farr
@@ -67,7 +105,7 @@ function CSA_greedy_step(F :: F_OP, do_svd = SVD_for_CSA)
 	return optimize(cost, x0, BFGS())
 end
 
-function CSA_SD_greedy_decomposition(H :: F_OP, α_max; decomp_tol = ϵ, verbose=true)
+function CSA_SD_greedy_decomposition(H :: F_OP, α_max; decomp_tol = ϵ, verbose=true, SAVELOAD=SAVING, SAVENAME=DATADIR*"CSA_SD.h5")
 	#same as CSA decomposition, but includes optimization of one-body term
 	F_rem = copy(H) #fermionic operator, tracks remainder after removing found greedy fragments
 	F_rem.filled[1] = false #only optimize 1-body and 2-body tensors
@@ -80,14 +118,41 @@ function CSA_SD_greedy_decomposition(H :: F_OP, α_max; decomp_tol = ϵ, verbose
 	unitary_L = real_orbital_rotation_num_params(H.N)
 
 	tot_L = cartan_L + unitary_L + H.N
+	if SAVELOAD
+		X = zeros(tot_L, α_max)
+	end
 
 	Farr = F_FRAG[]
+	α_curr = 0
+	α_ini = 1
+
+	if SAVELOAD
+		fid = h5open(SAVENAME, "cw")
+		if "CSA_SD" in keys(fid)
+			CSA_SD_group = fid["CSA_SD"]
+			x = read(CSA_SD_group, "x")
+			x_len, α_curr = size(x)
+			println("Found saved x under filename $SAVENAME for CSA_SD decomposition, loaded $α_curr fragments...")
+			if x_len != tot_L
+				error("Trying to load from $SAVENAME, saved x has wrong dimensions for CSA parameters of H!")
+			end
+			α_ini = α_curr + 1
+			for i in 1:α_curr
+				frag = CSA_SD_x_to_F_FRAG(x[:,i], H.N, H.spin_orb, cartan_L)
+				push!(Farr, frag)
+				F_rem = F_rem - to_OP(frag)
+			end
+			X[:,1:α_curr] = x
+		else
+			create_group(fid, "CSA_SD")
+			CSA_SD_group = fid["CSA_SD"]
+		end
+	end
 
 	curr_cost = L2_partial_cost(F_rem)
 	if verbose
 		println("Initial L2 cost is $curr_cost")
 	end
-	α_curr = 0
 
 	while curr_cost > decomp_tol && α_curr < α_max
 		α_curr += 1
@@ -102,13 +167,24 @@ function CSA_SD_greedy_decomposition(H :: F_OP, α_max; decomp_tol = ϵ, verbose
 		push!(Farr, frag)
 		F_rem = F_rem - to_OP(frag)
 		curr_cost = sol.minimum
+		if SAVELOAD
+			X[:,α_curr] = sol.minimizer
+			if haskey(CSA_SD_group, "x")
+				delete_object(CSA_SD_group, "x") 
+			end
+			CSA_SD_group["x"] = X[:, 1:α_curr]
+		end
 	end
 
 	if verbose
 		println("Finished CSA_SD decomposition, total number of fragments is $α_curr, remainder L2-norm is $curr_cost")
 		if curr_cost > decomp_tol
-			println("Warning, CSA_SD decomposition did not converge, remining L2-norm is $curr_cost")
+			@warn "CSA_SD decomposition did not converge, remaining L2-norm is $curr_cost"
 		end
+	end
+
+	if SAVELOAD
+		close(fid)
 	end
 
 	return Farr

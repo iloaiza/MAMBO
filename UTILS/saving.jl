@@ -6,7 +6,7 @@ global SAVING_LOADED = true
 
 using HDF5
 if !(@isdefined(DATAFOLDER))
-	DATAFOLDER = "./SAVE/"
+	DATAFOLDER = "./SAVED/"
 end
 if @isdefined myid
 	if myid() == 1
@@ -97,6 +97,29 @@ function overwrite_xK(funcname::String,x0,K0)
 	h5write(DATAFOLDER*funcname*".h5","x0",x0)
 	h5write(DATAFOLDER*funcname*".h5","K0",K0)
 	#println("overwrite_xK debug message: Saved x0 and K0 in $funcname")
+end
+
+function overwrite(funcname::String,x)
+	file_space(funcname)
+	h5write(DATAFOLDER*funcname*".h5","numparams",1)
+	h5write(DATAFOLDER*funcname*".h5","paramsNames",["x"])
+	h5write(DATAFOLDER*funcname*".h5", "x", x)
+end
+
+function save(funcname::String,x)
+	oldfile(funcname)
+	h5write(DATAFOLDER*funcname*".h5","numparams",1)
+	h5write(DATAFOLDER*funcname*".h5","paramsNames",["x"])
+	h5write(DATAFOLDER*funcname*".h5", "x", x)
+end
+
+function load(funcname::String)
+	filename = DATAFOLDER*funcname*".h5"
+	if isfile(filename)
+		return h5read(DATAFOLDER*funcname*".h5","x")
+	else
+		return false
+	end
 end
 
 macro loading(funcname::String,addname=false)

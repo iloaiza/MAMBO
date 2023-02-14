@@ -24,5 +24,8 @@ include("UTILS/py_utils.jl")
 include("UTILS/majorana.jl")
 include("UTILS/qubit.jl")
 include("UTILS/orbitals.jl")
+include("UTILS/fbss.jl")
+include("UTILS/trotter.jl")
+include("UTILS/schmidt.jl")
 
 include("UTILS/wrappers.jl")

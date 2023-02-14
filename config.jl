@@ -1,7 +1,7 @@
 #CONFIGURATION FILE
 #Sets defaults for code
 const F2Q_map = "jw"
-const SAVING = true #save/load fragments as they are generated, still not implemented!
+const SAVING = true #save/load quantities as they are generated
 
 #Decomposition options
 const SVD_for_CSA = true #starting conditions for each CSA step are taken from SVD solution

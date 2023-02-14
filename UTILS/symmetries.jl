@@ -74,11 +74,28 @@ function naive_ob_symmetry_shift(H :: F_OP; verbose=true)
 	return x1, H - x1*Ne
 end
 
-function symmetry_treatment(H :: F_OP; verbose=true)
+function symmetry_treatment(H :: F_OP; verbose=true, SAVENAME=DATAFOLDER*"SYM.h5", SAVELOAD=SAVING)
 	if verbose
 		println("Starting total L1 norm for Hamiltonian is $(PAULI_L1(H))")
 	end
 	Ne, Ne2 = symmetry_builder(H)
+
+	if SAVELOAD
+		fid = h5open(SAVENAME, "cw")
+		if haskey(fid, "SYMMETRY_SHIFT")
+			println("Found symmetry-shift saved data in $SAVENAME")
+			SS_group = fid["SYMMETRY_SHIFT"]
+			x2, x1 = read(SS_group, "shifts")
+			close(fid)
+			H2 = H - x2*Ne2
+			H_sym = H2 - x1*Ne
+			return H_sym, [x2,x1]
+		else
+			create_group(fid, "SYMMETRY_SHIFT")
+			SS_group = fid["SYMMETRY_SHIFT"]
+		end
+	end
+
 	#x2, H2 = naive_tb_symmetry_shift(H)
 	# =
 	τ_mat = τ_mat_builder([Ne2.mbts[3]])
@@ -99,6 +116,11 @@ function symmetry_treatment(H :: F_OP; verbose=true)
 
 	if verbose
 		println("Final total L1 norm for symmetry-shifted Hamiltonian is $(PAULI_L1(H_sym))")
+	end
+
+	if SAVELOAD
+		SS_group["shifts"] = [x2, x1]
+		close(fid)
 	end
 
 	return H_sym - obt_corr, [x2, x1]

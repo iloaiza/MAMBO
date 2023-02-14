@@ -99,8 +99,14 @@ function to_OF(OP :: M_OP, transformation = F2Q_map)
 	return to_OF(Q_OP(OP, transformation))
 end
 
-function to_OF(F :: FRAGMENT)
-	return to_OF(to_OP(F))
+function to_OF(F :: FRAGMENT; ob_corr = false)
+	#ob_corr=true removes one-body correction from fragment, make sure to collect back in one-body tensor
+	#returns one-body fragment as-is
+	if ob_corr == false || F.TECH == OBF()
+		return to_OF(to_OP(F))
+	else
+		return to_OF(to_OP(F) - ob_correction(F, return_op=true))
+	end
 end
 
 function py_sparse_import(py_sparse_mat; imag_tol=1e-14)

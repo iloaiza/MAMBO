@@ -30,9 +30,9 @@ function orbital_l1_optimizer(F :: F_OP; verbose=false, ret_op = true, do_Givens
 	U.θs .= sol.minimizer
 	
 	if ret_op
-		return F_OP_rotation(U, F), U, sol.minimum
+		return F_OP_rotation(U, F), U, sol.minimum, sol.minimizer
 	else
-		return U, sol.minimum
+		return U, sol.minimum, sol.minimizer
 	end
 end
 
