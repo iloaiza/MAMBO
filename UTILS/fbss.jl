@@ -82,14 +82,14 @@ function total_gsym_optimizer(F :: F_OP, num_elecs; s=true, verbose=false, SAVEL
 	Ne, Ne2 = symmetry_builder(F)
 
 
-	x = false
+	loaded_shifts = false
 
 	if SAVELOAD
 		fid = h5open(SAVENAME, "cw")
 		if haskey(fid, "FBSS")
 			FBSS_group = fid["FBSS"]
 			if haskey(FBSS_group, "shifts")
-				x = FBSS_group["shifts"]
+				loaded_shifts = read(FBSS_group,"shifts")
 				close(fid)
 			end
 		else
@@ -98,7 +98,7 @@ function total_gsym_optimizer(F :: F_OP, num_elecs; s=true, verbose=false, SAVEL
 		end
 	end
 
-	if SAVELOAD == false || x == false
+	if SAVELOAD == false || loaded_shifts == false
 		function cost(x, s_val = s)
 			if s_val
 				Sx = gsym_params_to_F_OP(x[4:F.N+3], x[F.N+4:end], num_elecs, x[3])
@@ -133,11 +133,11 @@ function total_gsym_optimizer(F :: F_OP, num_elecs; s=true, verbose=false, SAVEL
 	else
 		println("Loaded FBSS parameters!")
 		if s
-			S = gsym_params_to_F_OP(x[4:F.N+3], x[F.N+4:end], num_elecs, x[3])
+			S = gsym_params_to_F_OP(loaded_shifts[4:F.N+3], loaded_shifts[F.N+4:end], num_elecs, loaded_shifts[3])
 		else
-			S = gsym_params_to_F_OP(x[3:F.N+2], x[F.N+3:end], num_elecs)
+			S = gsym_params_to_F_OP(loaded_shifts[3:F.N+2], loaded_shifts[F.N+3:end], num_elecs)
 		end
-		S += x[1]*Ne + x[2]*Ne2
+		S += loaded_shifts[1]*Ne + loaded_shifts[2]*Ne2
 	end
 
 	return F - S
