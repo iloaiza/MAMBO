@@ -51,7 +51,6 @@ function iterative_schmidt(tbt :: Array{Float64, 4}; tol=1e-6, debug=false, retu
 		end
 	end
 
-	@show debug
 	if debug
 		tbt_reb = zeros(N,N,N,N)
 		for k1 in 1:N
@@ -109,7 +108,6 @@ end
 
 function split_schmidt(tbt :: Array{Float64, 4}; tol=1e-6, debug=false, count=true)
 	#return iterative schmidt decomposition of tbt for αααα/ββββ and ααββ/ββαα sectors separated
-	@show debug
 	l_hetero, accepted_hetero = iterative_schmidt(tbt, tol=tol, debug=debug, count=true)
 
 	tbt_homo = copy(tbt)
