@@ -64,7 +64,7 @@ function RUN(H; DO_CSA = true, DO_DF = true, DO_ΔE = true, DO_AC = true, DO_OO 
 			fid = h5open(name, "cw")
 			if haskey(fid, "dE")
 				println("Found saved dE for file $name")
-				λ_min = fid["dE"]
+				λ_min = read(fid,"dE")
 			else
 				@time λ_min = SQRT_L1(H)
 				fid["dE"] = λ_min
@@ -98,10 +98,8 @@ function RUN(H; DO_CSA = true, DO_DF = true, DO_ΔE = true, DO_AC = true, DO_OO 
 
 	if DO_MHC
 		println("\nMHC:")
-		@time λ2_MHC_iter = iterative_schmidt(H.mbts[3], count=COUNT, tol=1e-6)
-		@show λ1 + λ2_MHC_iter
-		@time λ2_MHC_split = split_schmidt(H.mbts[3], count=COUNT, tol=1e-6)
-		@show λ1 + λ2_MHC_split
+		@time λ2_MHC = split_schmidt(H.mbts[3], count=COUNT, tol=1e-6)
+		@show λ1 + λ2_MHC
 	end
 
 	if DO_CSA
