@@ -2,10 +2,6 @@ function CSA_greedy_decomposition(H :: F_OP, α_max; decomp_tol = ϵ, verbose=tr
 	F_rem = copy(H) #fermionic operator, tracks remainder after removing found greedy fragments
 	F_rem.filled[1:2] .= false #only optimize 2-body tensor
 
-	if H.spin_orb == true
-		error("CSA decomposition should be done with Hamiltonian represented in orbitals, not spin-orbitals!")
-	end
-
 	cartan_L = cartan_2b_num_params(H.N)
 	unitary_L = real_orbital_rotation_num_params(H.N)
 
@@ -268,7 +264,7 @@ function DF_decomposition(H :: F_OP; tol=SVD_tol, tiny=SVD_tiny, verbose=true, d
 		println("Starting Double-Factorization routine")
 	end
 	if H.spin_orb
-		println("Doing Double-Factorization for spin-orb=true, be wary of results...")
+		@warn "Doing Double-Factorization for spin-orb=true, be wary of results..."
 	end
 	
 	n = H.N
@@ -351,6 +347,9 @@ function DF_decomposition(H :: F_OP; tol=SVD_tol, tiny=SVD_tiny, verbose=true, d
 		L2_rem = sum(abs2.(tbt_tot - H.mbts[3]))
 		if verbose
 			@show L2_rem
+		end
+		if L2_rem > ϵ
+			@warn "Remainder of DF decomposition is larger than tolerance $ϵ..."
 		end
 	end
     
