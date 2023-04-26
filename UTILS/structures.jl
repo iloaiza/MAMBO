@@ -47,16 +47,15 @@ function F_OP(mbts :: Tuple, spin_orb=false)
 end
 
 struct M_OP <: OPERATOR
-	#majorana operator
+	#Majorana operator
 	Nmajs :: Int64 #highest polynomial power of majoranas (e.g. Ham = 4)
-	mbts_iso :: Tuple #Nmajs+1, corresponds to same-spin operators, e.g. ∑_σ γiσ0*γjσ1*γkσ0*γlσ1
-	mbts_hetero :: Tuple #Nmajs+1, corresponds to different-spin operators e.g. γiα0*γjα1*γkβ0*γlβ1
-	t_coeffs_iso :: Array #Nmajs+1 coefficients associated with each iso-spin tensor, often complex (not for identity!)
-	t_coeffs_hetero :: Array #Nmajs+1 coefficients associated with hetero tensors
-	# OP = sum_i t_coeffs[i] * (mbts[i] .* mtbs_operators) (e.g. mbts_operator[3][3,5] => γ30 γ51)
-	filled_iso :: Vector{Bool} #Nmajs+1 corresponding to whether mbts_iso[i] is filled
-	filled_hetero :: Vector{Bool} #Nmajs+1 corresponding to whether mbts_hetero[i] is filled
+	mbts :: Tuple #Nmajs+1, corresponds e.g. mbts[2][i] → γi, mbts[5][i,j,k,l] → γi*γj*γk*γl
+	t_coeffs :: Array #Nmajs+1 coefficients multiplying with each tensor, can be used for making mbts real if all multiplied by e.g. i/2
+	# OP = sum_i t_coeffs[i] * (mbts[i] .* mtbs_operators) (e.g. mbts_operator[3][3,5] => γ3*γ5)
+	filled :: Vector{Bool} #Nmajs+1 corresponding to whether mbts[i] is filled
 	body_sym :: Bool #false means all γin γjm are available, true only γi0 γj1 terms appear
+	#if true, this makes each mbts[k] dimension be N, otherwise it's 2N
+	#true also means Majorana words with odd-number of Majoranas can't appear
 	#false -> SO(2N), true -> SO(N)
 	spin_orb :: Bool #whether it comes from spin-orb symmetry
 	#false -> same coefficients as fermionic h_ij and g_ijkl, constructs majorana operators corresponding to m operators 
@@ -69,6 +68,20 @@ struct Q_OP <: OPERATOR
 	n_paulis :: Int64 #number of Pauli terms, doesn't include identity
 	id_coeff #coefficient multiplying identity term
 	paulis :: Array{pauli_word} #Pauli word structure defined in symplectic.jl
+end
+
+function Q_OP(paulis :: Array{pauli_word})
+	N = Int(paulis[1].size)
+	n_paulis = length(paulis)
+
+	return Q_OP(N, n_paulis, 0.0, paulis)
+end
+
+function Q_OP(pauli :: pauli_word)
+	N = Int(pauli.size)
+	n_paulis = 1
+
+	return Q_OP(N, n_paulis, 0.0, [pauli])
 end
 
 struct I_OP <: OPERATOR

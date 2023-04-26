@@ -12,7 +12,17 @@ function symmetry_builder(H :: F_OP)
 		end
 	end
 
-	return F_OP(([0],Ne_obt)), F_OP(([0],[0],Ne2_tbt))
+	return F_OP(([0],Ne_obt), H.spin_orb), F_OP(([0],[0],Ne2_tbt), H.spin_orb)
+end
+
+function Ne_builder(N :: Int64, spin_orb=true)
+	#returns Ne and Neˆ2, both symmetries can be represented in orbitals (so no need for spin-orbitals)
+	Ne_obt = zeros(N, N)
+	for i in 1:N
+		Ne_obt[i,i] = 1
+	end
+
+	return F_OP(([0],Ne_obt), spin_orb)
 end
 
 function Ne2_lambda_builder(N :: Int64)
@@ -90,10 +100,8 @@ function symmetry_treatment(H :: F_OP; verbose=true, SAVENAME=DATAFOLDER*"SYM.h5
 			H2 = H - x2*Ne2
 			H_sym = H2 - x1*Ne
 			return H_sym, [x2,x1]
-		else
-			create_group(fid, "SYMMETRY_SHIFT")
-			SS_group = fid["SYMMETRY_SHIFT"]
 		end
+		close(fid)
 	end
 
 	#x2, H2 = naive_tb_symmetry_shift(H)
@@ -104,7 +112,7 @@ function symmetry_treatment(H :: F_OP; verbose=true, SAVENAME=DATAFOLDER*"SYM.h5
 	# =#
 
 	#run one-body optimization routine over corrected one-body tensor
-	obt_corr = F_OP(ob_correction(H2))
+	obt_corr = ob_correction(H2, return_op=true)
 	H2 += obt_corr
 	D,_ = eigen(H2.mbts[2])
 	#x1, H_sym = naive_ob_symmetry_shift(H2, verbose=verbose)
@@ -119,6 +127,9 @@ function symmetry_treatment(H :: F_OP; verbose=true, SAVENAME=DATAFOLDER*"SYM.h5
 	end
 
 	if SAVELOAD
+		fid = h5open(SAVENAME, "cw")
+		create_group(fid, "SYMMETRY_SHIFT")
+		SS_group = fid["SYMMETRY_SHIFT"]
 		SS_group["shifts"] = [x2, x1]
 		close(fid)
 	end

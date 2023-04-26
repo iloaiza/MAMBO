@@ -12,7 +12,7 @@ const OO_GIVENS = true #whether orbital-rotation optimization generates unitarie
 const OO_reps = 10 #how many parallel repetitions are done for orbital optimization routine
 
 #Tolerances and constants
-const ϵ = 1e-6 #decomposition fermionic 1-norm tolerance
+const ϵ = 1e-6 #decomposition fermionic 2-norm tolerance
 const ϵ_Givens = 1e-12 #tolerance for Givens decomposition using maximal torus theorem L2-norm
 const SVD_tiny = 1e-8 #tolerance for symmetry-enforcement of SVD fragments
 const SVD_tol = 1e-8 #cut-off for SVD coefficients

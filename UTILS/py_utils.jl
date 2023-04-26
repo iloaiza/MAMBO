@@ -18,6 +18,7 @@ sympy = pyimport("sympy")
 of = pyimport("openfermion")
 ham = pyimport("ham_utils")
 fermionic = pyimport("ferm_utils")
+qub = pyimport("py_qubits")
 
 of_simplify(OP) = of.reverse_jordan_wigner(of.jordan_wigner(OP))
 
@@ -124,7 +125,7 @@ function py_sparse_import(py_sparse_mat; imag_tol=1e-14)
 	return sparse_mat
 end
 
-function OF_qubit_op_range(op_qubit, n_qubit=of.count_qubits(op_qubit); imag_tol=1e-16, ncv=minimum([50,2^n_qubit]), tol=1e-3, debug=false)
+function OF_qubit_op_range(op_qubit, n_qubit=of.count_qubits(op_qubit); imag_tol=1e-14, ncv=minimum([50,2^n_qubit]), tol=1e-3, debug=false)
 	#Calculates maximum and minimum eigenvalues for qubit operator within tolerance tol
 	#uses efficient Arpack Krylov-space routine eigs
 	op_py_sparse_mat = of.qubit_operator_sparse(op_qubit)

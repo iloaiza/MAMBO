@@ -239,6 +239,8 @@ function +(F1 :: F_OP, F2 :: F_OP)
 	end
 
 	if F1.N != F2.N
+		@show F1.N
+		@show F2.N
 		error("Trying to sum fermionic operators over different number of orbitals!")
 	end
 
@@ -364,21 +366,27 @@ function THC_x_to_F_FRAGS(x, α, N)
 	return FRAGS
 end
 
-function ob_correction(F :: F_OP)
+function ob_correction(F :: F_OP; return_op=false)
 	#returns correction to one-body tensor coming from tbt inside fermionic operator F
 	if F.spin_orb
-		return obt = sum([F.mbts[3][:,:,r,r] for r in 1:F.N])
+		obt = sum([F.mbts[3][:,:,r,r] for r in 1:F.N])
 	else
-		return obt = 2*sum([F.mbts[3][:,:,r,r] for r in 1:F.N])
+		obt = 2*sum([F.mbts[3][:,:,r,r] for r in 1:F.N])
+	end
+	
+	if return_op
+		return F_OP(([0], obt), F.spin_orb)
+	else
+		return obt
 	end
 end
 
 function ob_correction(tbt :: Array{Float64, 4}, spin_orb=false)
 	N = size(tbt)[1]
-	if spin_orb
-		return obt = sum([tbt[:,:,r,r] for r in 1:N])
+	if F.spin_orb
+		return sum([tbt[:,:,r,r] for r in 1:N])
 	else
-		return obt = 2*sum([tbt[:,:,r,r] for r in 1:N])
+		return 2*sum([tbt[:,:,r,r] for r in 1:N])
 	end
 end
 
@@ -441,14 +449,14 @@ function to_OBF(F :: F_OP)
 	return F_FRAG(1, fU, OBF(), C, F.N, F.spin_orb, 1, false)
 end
 
-function F_OP(tbt :: Array{Float64, 4})
+function F_OP(tbt :: Array{Float64, 4}, spin_orb=false)
 	#by default assume tbt is in spacial orbitals
-	return F_OP(([0], [0], tbt))
+	return F_OP(([0], [0], tbt), spin_orb)
 end
 
-function F_OP(obt :: Array{Float64, 2})
+function F_OP(obt :: Array{Float64, 2}, spin_orb=false)
 	#by default assume tbt is in spacial orbitals
-	return F_OP(([0], obt))
+	return F_OP(([0], obt), spin_orb)
 end
 
 function to_OBF(obt :: Array{Float64, 2})

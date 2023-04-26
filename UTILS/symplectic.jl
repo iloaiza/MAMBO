@@ -15,10 +15,43 @@ function pauli_bit(i :: Int64)
     end
 end
 
+function pauli_matrix(bit1 :: Bool, bit2 :: Bool)
+
+    if bit1
+        if bit2
+            return sparse([0 -1im; 1im 0])
+        else
+            return sparse([0im 1;1 0])
+        end
+    elseif bit2
+        return sparse([1 0im;0 -1])
+    else
+        return sparse([1 0im;0 1])
+    end
+end
+
+function pauli_matrix(pb :: pauli_bit)
+    return pauli_matrix(pb.bin...)
+end
+
 mutable struct pauli_word
     bits :: Array{pauli_bit,1} #array of single-qubit pauli matrices
     size :: Int64 #number of qubits in pauli word
     coeff :: Number #coefficient multiplying pauli word
+end
+
+import Base.copy
+
+function copy(pb :: pauli_bit)
+    return pauli_bit(pb.bin)
+end
+
+function copy(pw :: pauli_word)
+    bits = copy(pw.bits)
+    size = copy(pw.size)
+    coeff = copy(pw.coeff)
+
+    return pauli_word(bits, size, coeff)
 end
 
 function pauli_word(bits :: Array{pauli_bit}, coeff=1.0)
@@ -164,4 +197,32 @@ function pws_is_anticommuting(pw1, pw2)
 	bin2 = pw_to_bin_vec(pw2)
 
 	return binary_is_anticommuting(bin1, bin2, pw1.size)
+end
+
+function augment_qubits(pw :: pauli_word, Nobj :: Int64)
+    if Nobj < pw.size
+        error("Trying to turn pauli word of size $(pw.size) into $Nobj, qubits cannot be removed!")
+    end
+
+    if Nobj == pw.size
+        return pw
+    end
+
+    Ndiff = Nobj - pw.size
+    bits_arr = pw.bits
+    for i in 1:Ndiff
+        push!(bits_arr, pauli_bit(0))
+    end
+
+    return pauli_word(bits_arr, Nobj, pw.coeff)
+end
+
+function to_matrix(pw :: pauli_word)
+    mats = pauli_matrix.(pw.bits)
+
+    return pw.coeff * kron(mats...)
+end
+
+function of_pauli_word_to_binary_vector(pauli_word, n_qubits)
+    return Bool.(qub.pauli_word_to_binary_vector(pauli_word, n_qubits))
 end

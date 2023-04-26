@@ -24,8 +24,11 @@ include("UTILS/py_utils.jl")
 include("UTILS/majorana.jl")
 include("UTILS/qubit.jl")
 include("UTILS/orbitals.jl")
-include("UTILS/fbss.jl")
+include("UTILS/bliss.jl")
 include("UTILS/trotter.jl")
 include("UTILS/schmidt.jl")
+if @isdefined myid
+	include("UTILS/parallel.jl")
+end
 
 include("UTILS/wrappers.jl")
