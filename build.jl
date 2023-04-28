@@ -26,7 +26,10 @@ include("UTILS/qubit.jl")
 include("UTILS/orbitals.jl")
 include("UTILS/bliss.jl")
 include("UTILS/trotter.jl")
-include("UTILS/schmidt.jl")
+include("UTILS/thc.jl")
+include("UTILS/projectors.jl")
+include("UTILS/hubbard.jl")
+
 if @isdefined myid
 	include("UTILS/parallel.jl")
 end
