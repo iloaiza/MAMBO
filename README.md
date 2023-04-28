@@ -20,8 +20,34 @@ The python virtual environment should then be activated before running MAMBO rou
 'source VIRTUAL_ENVIRONMENT_DIRECTORY/bin/activate'
 and making sure that julia is running with the correct JULIA_DEPOT_PATH bash variable if not using default package installation directory.
 
+## Module overview
+	- bliss.jl: functions for BLISS routine (see Ref. 2)
+	- cost.jl: functions for calculating different norms of operators. Mainly 1- and 2-norms of fermionic operators.
+	- decompose.jl: CSA, DF, and related decompositions of fermionic operators
+	- ferm_utils.py: utilities for fermionic operators in python, interfaces with openfermion
+	- fermionic.jl: utilities for MAMBO fermionic operators class (F_OP, defined in structures.jl)
+	- guesses.jl: initial guesses for decomposition routines
+	- ham_utils.py: python utilities for the electronic structure Hamiltonian, interfaces with openfermion
+	- lcu.jl: calculation of lcu 1-norms for different decompositions
+	- linprog.jl: linear programming routines for symmetry-shift optimization (see Refs. 1 and 2, corresponds to "partial" routine in Ref. 2)
+	- majorana.jl: utilities for MAMBO Majorana operators class (M_OP, defined in structures.jl)
+	- orbitals.jl: orbital optimization routine for 1-norm minimization (see Koridon et al., Phys. Rev. Res. 3 (3), 2021. Material is also covered in Refs. 1 and 2)
+	- parallel.jl: code with parallel capabilities, mainly for trotter bounds (full implementation is under progress)
+	- projectors.jl: builds projectors of Fock space into constant number of electrons subspace, useful for Trotter bounds (under progress)
+	- py_qubits.jl: python utilities for qubit operators, interfaces with openfermion
+	- py_utils.jl: julia interface to all python modules and openfermion
+	- qubit.jl: utilities for MAMBO qubit operators class (Q_OP, defined in structures.jl)
+	- saving.jl: save-load utilities for decompositions and optimization results, uses HDF5
+	- structures.jl: definition of classes for many-body operators
+	- symmetries.jl: building of symmetry operators, e.g. Sz, Ne
+	- symplectic.jl: utilities for representing and manipulating qubit space as symplectic vectors
+	- trotter.jl: Trotterization implementation, errors and bounds (under progress)
+	- unitaries.jl: unitary transformations related to fermionic MAMBO operators (F_OP)
+	- wrappers.jl: runner functions which run workflows for obtaining all necessary quantities for e.g. tables in Refs. 1 and 2
+
 ## References
-This code was developped and used for all results in the publication:
+This code was developped and used for all results in the publications:
 
-[1] - I. Loaiza, A. Marefat Khah, N. Wiebe, and A. F. Izmaylov, Reducing molecular electronic Hamiltonian simulation cost for Linear Combination of Unitaries approaches. arXiv.2208.08272 (2022).
+[1] - I. Loaiza, A. Marefat Khah, N. Wiebe, and A. F. Izmaylov, Reducing molecular electronic Hamiltonian simulation cost for Linear Combination of Unitaries approaches. arXiv:2208.08272 (2022).
 
+[2] - I. Loaiza, A. F. Izmaylov, Reducing the molecular electronic Hamiltonian encoding costs on quantum computers by symmetry shifts. arXiv:2304.13772 (2023).
