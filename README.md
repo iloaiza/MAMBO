@@ -21,6 +21,8 @@ The python virtual environment should then be activated before running MAMBO rou
 and making sure that julia is running with the correct JULIA_DEPOT_PATH bash variable if not using default package installation directory.
 
 ## Module overview
+
+### UTILS folder
 	- bliss.jl: functions for BLISS routine (see Ref. 2)
 	- cost.jl: functions for calculating different norms of operators. Mainly 1- and 2-norms of fermionic operators.
 	- decompose.jl: CSA, DF, and related decompositions of fermionic operators
@@ -44,6 +46,13 @@ and making sure that julia is running with the correct JULIA_DEPOT_PATH bash var
 	- trotter.jl: Trotterization implementation, errors and bounds (under progress)
 	- unitaries.jl: unitary transformations related to fermionic MAMBO operators (F_OP)
 	- wrappers.jl: runner functions which run workflows for obtaining all necessary quantities for e.g. tables in Refs. 1 and 2
+
+### Main folder
+	- L1.jl: full workflow for obtaining LCU 1-norms for all decompositions/methods
+	- build.jl: single module for loading all utilities
+	- config.jl: general parameters and settings for all functions
+	- install.sh: installer file, see Installation section for more information
+
 
 ## References
 This code was developped and used for all results in the publications:
