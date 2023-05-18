@@ -13,6 +13,7 @@ COUNT = true #whether total number of unitaries should be counted
 BLISS = true #whether block-invariant symmetry shift routine is done
 DO_TROTTER = false #whether Trotter α is calculated, requires parallel routines
 DO_FC = false #whether fully-commuting routine is done
+TABLE_PRINT = false #whether final 1-norms are printed for copy-pasting in LaTeX table
 
 ######## RUNNING CODE
 mol_name = ARGS[1]
@@ -78,7 +79,7 @@ end
 
 ###### END: SAVELOAD ROUTINES FOR MOLECULAR HAMILTONIAN #######
 
-RUN(H, η=η, DO_CSA = DO_CSA, DO_DF = DO_DF, DO_ΔE = DO_ΔE,
+RUN(H, η=η, DO_CSA = DO_CSA, DO_DF = DO_DF, DO_ΔE = DO_ΔE, LATEX_PRINT = TABLE_PRINT, 
 	DO_FC = DO_FC, SYM_RED=DO_TROTTER, DO_AC = DO_AC, DO_OO = DO_OO,
 	DO_SQRT = DO_SQRT, DO_TROTTER=DO_TROTTER, DO_MHC = DO_MHC, COUNT = COUNT, verbose=verbose, name=FILENAME*".h5")
 
@@ -86,7 +87,7 @@ if SYM_SHIFT
 	println("\n\nStarting symmetry-shift routine...")
 	@time H_SYM, shifts = symmetry_treatment(H, verbose=verbose, SAVENAME=FILENAME*"_SYM.h5") # H = H_SYM + shifts[1]*Ne2 + shifts[2]*Ne
 	println("Finished obtaining symmetry shifts, running routines for shifted Hamiltonian...")
-	RUN(H_SYM, η=η, DO_CSA = DO_CSA, DO_DF = DO_DF, DO_ΔE = DO_ΔE,
+	RUN(H_SYM, η=η, DO_CSA = DO_CSA, DO_DF = DO_DF, DO_ΔE = DO_ΔE, LATEX_PRINT = TABLE_PRINT, 
 		DO_FC = DO_FC, SYM_RED=DO_TROTTER, DO_AC = DO_AC, DO_OO = DO_OO,
 		DO_SQRT = DO_SQRT, DO_TROTTER=DO_TROTTER, DO_MHC = DO_MHC, COUNT = COUNT, verbose=verbose, name=FILENAME*"_SYM.h5")
 end
@@ -95,7 +96,7 @@ if INT
 	println("\n\nStarting interaction picture routine...")
 	@time H_INT = INTERACTION(H, SAVENAME=FILENAME*"_INT.h5")
 	println("Finished obtaining interaction picture Hamiltonian, starting post-processing...")
-	RUN(H_INT, η=η, DO_CSA = DO_CSA, DO_DF = DO_DF, DO_ΔE = DO_ΔE,
+	RUN(H_INT, η=η, DO_CSA = DO_CSA, DO_DF = DO_DF, DO_ΔE = DO_ΔE, LATEX_PRINT = TABLE_PRINT, 
 		DO_FC = DO_FC, SYM_RED=DO_TROTTER, DO_AC = DO_AC, DO_OO = DO_OO,
 		DO_SQRT = DO_SQRT, DO_TROTTER=DO_TROTTER, DO_MHC = DO_MHC, COUNT = COUNT, verbose=verbose, name=FILENAME*"_INT.h5")
 end
@@ -106,7 +107,7 @@ if BLISS
 	H_bliss = bliss_optimizer(H, η, verbose=verbose, SAVENAME=FILENAME*"_BLISS.h5")
 	#H_bliss = quadratic_bliss(H, η)
 	println("Running 1-norm routines...")
-	RUN(H_bliss, η=η, DO_CSA = DO_CSA, DO_DF = DO_DF, DO_ΔE = DO_ΔE,
+	RUN(H_bliss, η=η, DO_CSA = DO_CSA, DO_DF = DO_DF, DO_ΔE = DO_ΔE, LATEX_PRINT = TABLE_PRINT, 
 		DO_FC = DO_FC, SYM_RED=DO_TROTTER, DO_AC = DO_AC, DO_OO = DO_OO,
 		DO_SQRT = DO_SQRT, DO_TROTTER=DO_TROTTER, DO_MHC = DO_MHC, COUNT = COUNT, verbose=verbose, name=FILENAME*"_BLISS.h5")
 end
@@ -115,7 +116,7 @@ if BLISS && INT
 	println("\n\n Starting interaction picture + BLISS routines...")
 	println("\nRunning before routine (H -> bliss -> int)")
 	@time H_before = INTERACTION(H_bliss, SAVENAME=FILENAME*"_BLISS_INT.h5")
-	RUN(H_before, η=η, DO_CSA = DO_CSA, DO_DF = DO_DF, DO_ΔE = DO_ΔE,
+	RUN(H_before, η=η, DO_CSA = DO_CSA, DO_DF = DO_DF, DO_ΔE = DO_ΔE, LATEX_PRINT = TABLE_PRINT, 
 		DO_FC = DO_FC, SYM_RED=DO_TROTTER, DO_AC = DO_AC, DO_OO = DO_OO,
 		DO_SQRT = DO_SQRT, DO_TROTTER=DO_TROTTER, DO_MHC = DO_MHC, COUNT = COUNT, verbose=verbose, name=FILENAME*"_BLISS_INT.h5")
 end

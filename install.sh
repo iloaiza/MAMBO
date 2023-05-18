@@ -18,7 +18,12 @@ then
 	#--system-site-packages option makes sure configuration from system is taken for packages (e.g. OpenBLAS)
 	virtualenv --system-site-packages py_env
 	source ./py_env/bin/activate
-	pip install openfermion sympy pyscf openfermionpyscf h5py
+	#requires openfermion development branch
+	git clone https://github.com/quantumlib/OpenFermion
+	cd OpenFermion
+	python -m pip install -e .
+	cd ..
+	pip install sympy pyscf openfermionpyscf h5py
 fi
 
 touch install.jl

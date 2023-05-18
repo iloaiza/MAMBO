@@ -383,7 +383,7 @@ end
 
 function ob_correction(tbt :: Array{Float64, 4}, spin_orb=false)
 	N = size(tbt)[1]
-	if F.spin_orb
+	if spin_orb
 		return sum([tbt[:,:,r,r] for r in 1:N])
 	else
 		return 2*sum([tbt[:,:,r,r] for r in 1:N])

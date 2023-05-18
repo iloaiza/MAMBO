@@ -227,18 +227,14 @@ function RUN(H; DO_CSA = true, DO_DF = true, DO_ΔE = true, DO_AC = true, DO_OO 
 			end
 		end
 	end
-
-	λDF = λ1 + λ2_DF
-	#λFCSA = λ1 + λ2_CSA
-	#λSRCSA = λ1 + λ2_CSA_SQRT
 	
 	if LATEX_PRINT
+		λDF = λ1 + λ2_DF
 		println("\n\n\nFINISHED ROUTINE FOR $name, PRINTING LATEX TABLE...")
 		println("#########################################################")
 		println("#########################################################")
 		println("Printout legend: Parenthesis corresponds to #of unitaries when available")
 		println("ΔE/2 & λPauli & λOO_Pauli & λAC & λOO_AC & λDF & λGCSA")
-		#println("$(round(sigdigits=3,λ_min)) & $(round(sigdigits=3,λPauli[1]))($(Int(λPauli[2]))) & $(round(sigdigits=3,λOO_Pauli[1]))($(Int(λOO_Pauli[2]))) & $(round(sigdigits=3,λAC))($N_AC) & $(round(sigdigits=3,λOO_AC))($N_OO_AC) & $(round(sigdigits=3,λDF[1]))($(Int(λDF[2]))) & $(round(sigdigits=3,λFCSA[1]))($(Int(λFCSA[2])))")
 		println("$(round(sigdigits=3,λ_min)) & $(round(sigdigits=3,λPauli[1]))($(Int(λPauli[2]))) & $(round(sigdigits=3,λAC))($N_AC) & $(round(sigdigits=3,λDF[1]))($(Int(λDF[2])))")
 		println("#########################################################")
 		println("#########################################################")
