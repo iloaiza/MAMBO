@@ -1,3 +1,5 @@
+# THIS REPOSITORY HAS BEEN DEPRECATED. GO TO [`QuantumMAMBO.jl`](https://github.com/iloaiza/QuantumMAMBO.jl) FOR THE UP-TO-DATE VERSION.
+
 # MAMBO: Efficient many-body routines in Julia
 
 ## Using MAMBO
